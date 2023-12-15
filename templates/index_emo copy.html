@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Emotion Detection</title>
+</head>
+<body">
+
+    <h1>Emotion Detection</h1>
+    <div class="video-container">
+        <img id="video-feed" alt="Video Feed" height="480px" src="https://austads.com/static/version1691188822/frontend/Pearl/weltpixel_custom/en_US/Magento_Catalog/images/product/placeholder/image.jpg">
+            </div>
+    <br>
+
+    <button id="start-session" onclick="startSession()">Start Session</button>
+    <button id="end-session" onclick="endSessionCombined()" disabled>End Session</button>
+
+
+    <!-- <button id="startButton">Start Recording</button>
+    <button id="stopButton" disabled>Stop Recording</button> -->
+
+    <audio id="audioPlayer" controls style="display: none;"></audio>
+    <div id="predictionResult" style="display: none;"></div>
+    <br><br>
+    <div id="dataframe-container"></div>
+
+    <div id="noice-prediction"></div>
+
+
+    <script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js"></script>
+
+    <script>
+
+        const audioPlayer = document.getElementById('audioPlayer');
+        const predictionResult = document.getElementById('predictionResult');
+        let audioContext;
+        let recorder;
+
+        let placeholder = "https://austads.com/static/version1691188822/frontend/Pearl/weltpixel_custom/en_US/Magento_Catalog/images/product/placeholder/image.jpg"
+
+
+        async function startSession() {
+            // document.getElementById('video-feed').src = "{{ url_for('video_feed') }}";
+
+
+            // Start startrecording
+            await startRecording();
+
+            document.getElementById('start-session').disabled = true;
+            document.getElementById('end-session').disabled = false;
+        }
+
+        async function endSessionCombined() {
+            document.getElementById('start-session').disabled = false;
+            document.getElementById('end-session').disabled = true;
+
+            await stopRecording();
+
+            // End emotion session
+            fetch("/end_session_emo")
+                .then(response => response.text())
+                .catch(error => {
+                    alert("Error exporting emotion session data.");
+                });
+
+            // End awake session
+            fetch("/end_session_awake")
+                .then(response => response.text())
+                .then(data => {
+                    alert("Session data exported to CSV files.");
+                })
+                .catch(error => {
+                    alert("Error exporting awake session data.");
+                });
+            
+            fetch("/get_dataframe")
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('dataframe-container').innerHTML = data;
+                })
+                .catch(error => {
+                    alert("Error fetching dataframe.");
+                });
+
+            document.getElementById('video-feed').src = placeholder;
+        }
+
+
+
+
+        // const stopButton = document.getElementById('stopButton');
+        // stopButton.addEventListener('click', stopRecording);
+
+
+        
+
+        
+
+        async function startRecording() {
+            // startButton.disabled = true;
+            // stopButton.disabled = false;
+
+            audioContext = new AudioContext();
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const input = audioContext.createMediaStreamSource(stream);
+            recorder = new Recorder(input);
+            recorder.record();
+        }
+
+        async function stopRecording() {
+            // startButton.disabled = false;
+            // stopButton.disabled = true;
+
+            recorder.stop();
+            recorder.exportWAV(await function(blob) {
+                audioPlayer.src = URL.createObjectURL(blob);
+                audioPlayer.style.display = 'block';
+
+                recorder.clear();
+                audioContext.close();
+
+                // Create a new File object from the Blob
+                const audioFile = new File([blob], 'recorded_audio.wav', { type: 'audio/wav' });
+
+                // Create a new FormData object and append the audio file to it
+                const formData = new FormData();
+                formData.append('audio', audioFile);
+
+                // Submit the form with the recorded audio
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    predictionResult.textContent = `Predicted Class: ${data.predicted_class}`;
+                    predictionResult.style.display = 'block';
+                    // Handle the response as needed
+                })
+                .catch(error => {
+                    console.error(error);
+                    // Handle the error as needed
+                });
+            });
+        }
+        
+</script>
+
+</body>
+</html>

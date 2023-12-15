@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Keystroke Analysis</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        // $(document).ready(function(){
+        //     function getPredictions() {
+        //         // Fetch predictions from the Flask server
+        //         $.get("/get_predictions", function(data) {
+        //             // Assuming the Flask server returns predictions in JSON format
+        //             // Update the HTML to display the predictions
+        //             if (data.length > 0) {
+        //                 var prediction = data[0].Prediction;  // Assuming only one prediction
+        //                 $("#predictionResult").text(prediction);
+        //             }
+        //         });
+        //     }
+            
+        //     // Fetch predictions initially when the page loads
+        //     getPredictions();
+            
+        //     // Update predictions every 5 seconds (adjust the timing as per your requirement)
+        //     setInterval(getPredictions, 5000);
+        // });
+        function startScheduler() {
+            fetch('/start', { method: 'GET' })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data); // Show response from the server
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error starting the scheduler');
+                });
+        }
+        function stopScheduler() {
+            fetch('/stop', { method: 'GET' })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data); // Show response from the server
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error stopping the scheduler');
+                });
+        }
+        
+    </script>
+</head>
+<body>
+    <button onclick="startScheduler()">Start Scheduler</button>
+    <button onclick="stopScheduler()">Stop Scheduler</button>
+    <button id="start-session" onclick="startSession()">Start Session</button>
+    <button id="end-session" onclick="endSessionCombined()" disabled>End Session</button>
+    <h1>Keystroke Analysis</h1>
+    <!-- <div id="predictionResult">
+        {{value}}
+    </div> -->
+    <!-- Other content or elements -->
+</body>
+</html>

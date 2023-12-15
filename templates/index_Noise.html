@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Recorder</title>
+</head>
+<body>
+    <button id="startButton">Start Recording</button>
+    <button id="stopButton" disabled>Stop Recording</button>
+    <audio id="audioPlayer" controls style="display: none;"></audio>
+    <div id="predictionResult" style="display: none;"></div>
+
+    <script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js"></script>
+
+    <script>
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const predictionResult = document.getElementById('predictionResult');
+        let audioContext;
+        let recorder;
+
+        startButton.addEventListener('click', startRecording);
+        stopButton.addEventListener('click', stopRecording);
+
+        async function startRecording() {
+            startButton.disabled = true;
+            stopButton.disabled = false;
+
+            audioContext = new AudioContext();
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const input = audioContext.createMediaStreamSource(stream);
+            recorder = new Recorder(input);
+            recorder.record();
+        }
+
+        function stopRecording() {
+            startButton.disabled = false;
+            stopButton.disabled = true;
+
+            recorder.stop();
+            recorder.exportWAV(function(blob) {
+                audioPlayer.src = URL.createObjectURL(blob);
+                audioPlayer.style.display = 'block';
+
+                recorder.clear();
+                audioContext.close();
+
+                // Create a new File object from the Blob
+                const audioFile = new File([blob], 'recorded_audio.wav', { type: 'audio/wav' });
+
+                // Create a new FormData object and append the audio file to it
+                const formData = new FormData();
+                formData.append('audio', audioFile);
+
+                // Submit the form with the recorded audio
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    predictionResult.textContent = `Predicted Class: ${data.predicted_class}`;
+                    predictionResult.style.display = 'block';
+                    // Handle the response as needed
+                })
+                .catch(error => {
+                    console.error(error);
+                    // Handle the error as needed
+                });
+            });
+        }
+    </script>
+</body>
+</html>

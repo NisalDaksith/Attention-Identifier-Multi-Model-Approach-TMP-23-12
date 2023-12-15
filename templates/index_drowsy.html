@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attention Level Detection</title>
+</head>
+<body>
+    <h1>Attention Level Detection</h1>
+    <div class="video-container">
+        <img id="video-feed" src="{{ url_for('video_feed') }}" alt="Video Feed">
+    </div>
+    <br>
+    <button id="end-session" onclick="endSession()">End Session</button>
+    <script>
+        // JavaScript function to end the session
+        function endSession() {
+            fetch("/end_session")
+                .then(response => response.text())
+                .then(data => {
+                    alert("Session data exported to CSV file.");
+                })
+                .catch(error => {
+                    alert("Error exporting session data.");
+                });
+        }
+    </script>
+</body>
+</html>
